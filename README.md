@@ -1,7 +1,7 @@
 # Synthetic Biology Promoter Designer
 
-> **Domain:** Post-Quantum Cryptography & Zero-Knowledge Architecture  
-> **Reference Guidelines & Standards:** `NIST FIPS 203/204/205, NIST SP 800-90B & ISO/IEC Standards`
+> **Domain:** Synthetic Biology & Genetic Circuit Design
+> **Standards:** Synthetic Biology Open Language (SBOL 3.0)
 
 <div align="center">
 
@@ -9,91 +9,137 @@
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
 ![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
 
 </div>
 
 ---
 
-## 📖 What It Does
+## What It Does
 
-**Synthetic Biology Promoter Designer** is an advanced analytical and computational platform implementing Thermodynamic transcriptional models & PWM synthetic genetic logic gate designer.
-
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-- **Deterministic Calculation Engine**: Strict compliance with standard reference formulations and thresholds.
-- **Risk & Urgency Classification**: Multi-tier categorization with automated clinical/operational action recommendations.
-- **Validation & Guardrails**: Rigorous input bounds checking and anomaly detection.
+**Synthetic Biology Promoter Designer** is a computational platform for designing synthetic genetic logic gates using position weight matrices (PWMs) and thermodynamic transcriptional models. It provides multi-agent evaluation of promoter designs with cryptographic audit trails.
 
 ---
 
-## 💻 CLI Quickstart & Usage
+## Key Capabilities
 
-### 1. Guided Interactive Mode
+- **Thermodynamic Models**: Transcription factor binding affinity evaluation using PWM scoring
+- **Multi-Agent Evaluation**: Specialized sub-agents for parameter verification, safety conformance, and protocol compliance
+- **HMAC-SHA256 Audit Trail**: Cryptographically chained, tamper-evident logging for every evaluation
+- **PHI Outbound Guard**: Active pattern detection blocking sensitive identifiers from outbound data
+- **FastAPI REST API**: OpenAPI 3.1 endpoints for programmatic access
+- **Prometheus Metrics**: Operational telemetry export
+
+---
+
+## Installation
+
 ```bash
-python cli.py
+pip install -e .
 ```
 
-### 2. Direct Parameterized Evaluation
+### Optional Dependencies
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+pip install fastapi uvicorn  # For REST API server
+pip install pytest           # For running tests
+```
+
+---
+
+## CLI Usage
+
+### 1. Single Task Evaluation
+```bash
+python cli.py audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+```
+
+### 2. Interactive Chat
+```bash
+python cli.py chat "What is the system status?"
+```
+
+### 3. Batch CSV Processing
+```bash
+python cli.py batch -i sample.csv -o results.csv
+```
+
+### 4. Verify Audit Integrity
+```bash
+python cli.py verify-audit
+```
+
+### 5. Launch REST Server
+```bash
+python cli.py serve --host 127.0.0.1 --port 8000
 ```
 
 ### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Parameter / observation metric | Required |
-| `target_identifier` | Parameter / observation metric | Required |
-| `primary_metric` | Parameter / observation metric | Required |
-| `secondary_metric` | Parameter / observation metric | Required |
-| `is_critical_flag` | Parameter / observation metric | Required |
-| `status_descriptor` | Parameter / observation metric | Required |
+| Argument | Description | Default |
+|:---------|:------------|:--------|
+| `--task-id` | Unique task identifier | TASK-2026-001 |
+| `--target` | Target key or identifier | KEY-TARGET-01 |
+| `--primary` | Primary metric value (float) | 28.5 |
+| `--secondary` | Secondary metric value (float) | 14.2 |
+| `--critical` | Flag critical intervention | False |
+| `--status` | Status descriptor | DISCORDANT |
 
 ---
 
-## 🛡️ Security & Enterprise Architecture
+## REST API Endpoints
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| GET | `/health` | Health check |
+| GET | `/metrics` | Prometheus metrics |
+| POST | `/api/audit` | Submit task for evaluation |
+| POST | `/api/chat` | Query supervisor |
+| GET | `/api/audit/logs` | Get audit trail |
 
 ---
 
-## 🧪 Testing & Verification
+## Security
 
-Run the automated test suite:
+- **Audit Trail Key**: Set `AUDIT_SECRET_KEY` environment variable for persistent HMAC signing across restarts. Without it, an ephemeral runtime key is generated (with a warning).
+- **PHI Guard**: Automatic detection and blocking of SSNs, MRNs, phone numbers, emails, and patient names in outbound data.
+
+---
+
+## Testing
 
 ```bash
 pytest -v
 ```
 
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
-```
-
 ---
 
-## 🐳 Container Deployment
+## Container Deployment
 
 ```bash
 docker build -t synthetic-biology-promoter-designer .
 docker run -p 8000:8000 synthetic-biology-promoter-designer
+```
+
+---
+
+## Project Structure
+
+```
+synthetic-biology-promoter-designer/
+├── agents/                    # Enterprise multi-agent system
+│   ├── api.py                 # FastAPI REST server
+│   ├── base.py                # Security, PHI guard, audit trail
+│   ├── models.py              # Pydantic schemas
+│   ├── supervisor.py          # Orchestrator
+│   └── workers.py             # Specialized evaluation agents
+├── synbio_promoter/           # Core synthetic biology engine
+│   ├── agents.py              # Sub-agent implementations
+│   ├── engine.py              # Domain evaluation logic
+│   ├── models.py              # Data models
+│   ├── cli.py                 # CLI entry point
+│   └── server.py              # FastAPI app factory
+├── tests/                     # Test suite
+├── cli.py                     # Main CLI entry point
+├── enrichment.py              # Enrichment feature suite
+├── simulator.py               # High-throughput simulation
+└── pyproject.toml             # Project configuration
 ```
