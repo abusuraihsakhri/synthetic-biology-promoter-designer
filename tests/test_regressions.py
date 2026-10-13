@@ -79,3 +79,9 @@ def test_csv_malformed_number_gracefully_fails(tmp_path, entrypoint):
     input_path.write_text("task_id,primary_metric\nT1,nan\n", encoding="utf-8")
     assert entrypoint(["batch", "-i", str(input_path), "-o", str(tmp_path / "output.csv")]) == 1
     assert not (tmp_path / "output.csv").exists()
+
+
+def test_verify_audit_command_reports_failure(monkeypatch):
+    from agents.base import AuditLogger
+    monkeypatch.setattr(AuditLogger, "verify_integrity", staticmethod(lambda: False))
+    assert cli_main(["verify-audit"]) == 1
