@@ -6,6 +6,7 @@ import csv
 import json
 import sys
 from .models import FrontierPayload
+from csv_utils import parse_csv_boolean, parse_csv_float
 from .agents import SynBioPromoterCoordinator
 
 coordinator = SynBioPromoterCoordinator()
@@ -73,7 +74,12 @@ def main(argv=None):
             with open(args.input, mode="r", encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f)
                 fieldnames = list(reader.fieldnames or [])
+                if not reader.fieldnames:
+                    raise ValueError("CSV must include a header row")
                 rows = list(reader)
+        except ValueError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
         except FileNotFoundError:
             print(f"Error: Input file '{args.input}' not found.", file=sys.stderr)
             return 1
@@ -81,18 +87,22 @@ def main(argv=None):
             print(f"Error: Permission denied reading '{args.input}'.", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_status", "total_alerts", "critical_count", "consensus_summary"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_status", "total_alerts", "critical_count", "consensus_summary"]))
         out_rows = []
-        for r in rows:
-            payload = FrontierPayload(
-                task_id=r.get("task_id", "TASK-01"),
-                target_identifier=r.get("target_identifier", "TARGET-01"),
-                primary_metric=float(r.get("primary_metric", 15.0)),
-                secondary_metric=float(r.get("secondary_metric", 5.0)),
-                status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
-            )
-            dossier = coordinator.process(payload)
+        for row_number, r in enumerate(rows, start=2):
+            try:
+                payload = FrontierPayload(
+                    task_id=r.get("task_id", "TASK-01"),
+                    target_identifier=r.get("target_identifier", "TARGET-01"),
+                    primary_metric=parse_csv_float(r.get("primary_metric", 15.0), "primary_metric"),
+                    secondary_metric=parse_csv_float(r.get("secondary_metric", 5.0), "secondary_metric"),
+                    status_descriptor=r.get("status_descriptor", "NOMINAL"),
+                    is_critical_flag=parse_csv_boolean(r.get("is_critical_flag", False)),
+                )
+                dossier = coordinator.process(payload)
+            except (ValueError, TypeError) as exc:
+                print(f"Error: CSV row {row_number}: {exc}", file=sys.stderr)
+                return 1
             row_dict = dict(r)
             row_dict["overall_status"] = dossier["overall_status"]
             row_dict["total_alerts"] = dossier["total_alerts"]
@@ -100,7 +110,12 @@ def main(argv=None):
             row_dict["consensus_summary"] = dossier["consensus_summary"]
             out_rows.append(row_dict)
 
-        with open(args.output, mode="w", encoding="utf-8", newline="") as f:
+        try:
+            output_file = open(args.output, mode="w", encoding="utf-8", newline="")
+        except OSError as exc:
+            print(f"Error: Cannot write output: {exc}", file=sys.stderr)
+            return 1
+        with output_file as f:
             writer = csv.DictWriter(f, fieldnames=out_fields)
             writer.writeheader()
             writer.writerows(out_rows)
