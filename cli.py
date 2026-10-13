@@ -7,7 +7,8 @@ import json
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import AuditLogger
+from agents.base import AuditLogger, SecurityException
+from csv_utils import parse_csv_boolean, parse_csv_float
 
 supervisor = SystemSupervisor(model_provider="mock")
 
@@ -56,7 +57,7 @@ def main(argv=None):
         dossier = supervisor.process_task(payload)
         print("=" * 80)
         print(f"  SYNTHETIC BIOLOGY PROMOTER DESIGNER")
-        print(f"  Domain: Post-Quantum Cryptography & Hardware Security | Standard: NIST FIPS 203/204/205 / ISO/IEC 17825 Standards")
+        print("  Scope: Generic threshold evaluation demo (not a biological prediction)")
         print(f"  Dossier ID: {dossier.dossier_id} | Urgency: [{dossier.overall_urgency.value}]")
         print("=" * 80)
         for a in dossier.alerts:
@@ -77,14 +78,19 @@ def main(argv=None):
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
         print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
-        return 0
+        return 0 if valid else 1
 
     if args.command == "batch":
         try:
             with open(args.input, mode="r", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f)
+                reader = csv.DictReader(f, strict=True)
                 fieldnames = list(reader.fieldnames or [])
+                if not reader.fieldnames:
+                    raise ValueError("CSV must include a header row")
                 rows = list(reader)
+        except (ValueError, csv.Error) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
         except FileNotFoundError:
             print(f"Error: Input file '{args.input}' not found.", file=sys.stderr)
             return 1
@@ -92,18 +98,28 @@ def main(argv=None):
             print(f"Error: Permission denied reading '{args.input}'.", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
-        for r in rows:
-            payload = SystemTaskPayload(
-                task_id=r.get("task_id", "TASK-01"),
-                target_identifier=r.get("target_identifier", "TARGET-01"),
-                primary_metric=float(r.get("primary_metric", 15.0)),
-                secondary_metric=float(r.get("secondary_metric", 5.0)),
-                status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
-            )
-            dossier = supervisor.process_task(payload)
+        for row_number, r in enumerate(rows, start=2):
+            if None in r:
+                print(f"Error: CSV row {row_number} has more fields than the header.", file=sys.stderr)
+                return 1
+            try:
+                payload = SystemTaskPayload(
+                    task_id=r.get("task_id", "TASK-01"),
+                    target_identifier=r.get("target_identifier", "TARGET-01"),
+                    primary_metric=parse_csv_float(r.get("primary_metric", 15.0), "primary_metric"),
+                    secondary_metric=parse_csv_float(r.get("secondary_metric", 5.0), "secondary_metric"),
+                    status_descriptor=r.get("status_descriptor", "NOMINAL"),
+                    is_critical_flag=parse_csv_boolean(r.get("is_critical_flag", False)),
+                )
+                dossier = supervisor.process_task(payload)
+            except SecurityException:
+                print(f"Error: CSV row {row_number} contains a sensitive identifier.", file=sys.stderr)
+                return 1
+            except (ValueError, TypeError) as exc:
+                print(f"Error: CSV row {row_number}: {exc}", file=sys.stderr)
+                return 1
             row_dict = dict(r)
             row_dict["overall_urgency"] = dossier.overall_urgency.value
             row_dict["integrity_status"] = dossier.integrity_status.value
@@ -111,7 +127,12 @@ def main(argv=None):
             row_dict["audit_hash"] = dossier.audit_hash
             out_rows.append(row_dict)
 
-        with open(args.output, mode="w", encoding="utf-8", newline="") as f:
+        try:
+            output_file = open(args.output, mode="w", encoding="utf-8", newline="")
+        except OSError as exc:
+            print(f"Error: Cannot write output: {exc}", file=sys.stderr)
+            return 1
+        with output_file as f:
             writer = csv.DictWriter(f, fieldnames=out_fields)
             writer.writeheader()
             writer.writerows(out_rows)

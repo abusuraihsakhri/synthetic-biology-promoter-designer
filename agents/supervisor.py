@@ -1,8 +1,9 @@
 """
 Supervisor Orchestrator & Operations Intelligence for Synthetic Biology Promoter Designer.
-Domain: Post-Quantum Cryptography & Hardware Security
+Domain: Generic parameter threshold evaluation
 """
 import uuid
+import json
 from typing import Dict, Any, List, Optional
 from .base import AuditLogger, ActionExecutor, PHIGuard
 from .models import SystemTaskPayload, AgentAlert, ConsensusDossier, UrgencyLevel, SystemIntegrityStatus
@@ -25,6 +26,7 @@ class SystemSupervisor:
         PHIGuard.assert_no_phi(payload.task_id)
         PHIGuard.assert_no_phi(payload.target_identifier)
         PHIGuard.assert_no_phi(payload.status_descriptor)
+        PHIGuard.assert_no_phi(json.dumps(payload.attributes, default=str))
 
         # Multi-worker evaluations
         all_alerts: List[AgentAlert] = []
@@ -75,5 +77,5 @@ class SystemSupervisor:
 
     def query_supervisory_chat(self, query: str) -> str:
         PHIGuard.assert_no_phi(query)
-        prompt = f"Supervisor inquiry for Synthetic Biology Promoter Designer under NIST FIPS 203/204/205 / ISO/IEC 17825 Standards: {query}"
+        prompt = f"Supervisor inquiry for generic threshold evaluation demo: {query}"
         return self.llm.invoke(prompt)
