@@ -2,7 +2,7 @@
 FastAPI REST API Server for Synthetic Biology Promoter Designer.
 """
 from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard, SecurityException
 from .models import SystemTaskPayload, ConsensusDossier
@@ -49,11 +49,7 @@ def api_audit(payload: SystemTaskPayload):
 
 @app.post("/api/chat")
 def api_chat(req: ChatRequest):
-    try:
-        ans = supervisor.query_supervisory_chat(req.query)
-        return {"response": ans}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Unable to process the request.")
+    return {"response": supervisor.query_supervisory_chat(req.query)}
 
 
 @app.get("/api/audit/logs")

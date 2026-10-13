@@ -85,3 +85,21 @@ def test_verify_audit_command_reports_failure(monkeypatch):
     from agents.base import AuditLogger
     monkeypatch.setattr(AuditLogger, "verify_integrity", staticmethod(lambda: False))
     assert cli_main(["verify-audit"]) == 1
+
+
+def test_concurrent_audit_entries_form_valid_chain():
+    from concurrent.futures import ThreadPoolExecutor
+    trail = AuditTrail(secret_key="controlled-test-key")
+    def log_one(i):
+        trail.log("worker", "tier", "task", {"i": i})
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(log_one, range(100)))
+    assert len(trail.get_trail()) == 100
+    assert trail.verify_integrity()
+
+
+@pytest.mark.parametrize("entrypoint", [cli_main, alternate_main])
+def test_extra_csv_fields_report_error(tmp_path, entrypoint):
+    source = tmp_path / "too_many_fields.csv"
+    source.write_text("task_id,primary_metric\nT1,10,extra\n", encoding="utf-8")
+    assert entrypoint(["batch", "-i", str(source), "-o", str(tmp_path / "out.csv")]) == 1

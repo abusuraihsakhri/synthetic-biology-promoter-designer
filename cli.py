@@ -83,12 +83,12 @@ def main(argv=None):
     if args.command == "batch":
         try:
             with open(args.input, mode="r", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f)
+                reader = csv.DictReader(f, strict=True)
                 fieldnames = list(reader.fieldnames or [])
                 if not reader.fieldnames:
                     raise ValueError("CSV must include a header row")
                 rows = list(reader)
-        except ValueError as exc:
+        except (ValueError, csv.Error) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
         except FileNotFoundError:
@@ -101,6 +101,9 @@ def main(argv=None):
         out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for row_number, r in enumerate(rows, start=2):
+            if None in r:
+                print(f"Error: CSV row {row_number} has more fields than the header.", file=sys.stderr)
+                return 1
             try:
                 payload = SystemTaskPayload(
                     task_id=r.get("task_id", "TASK-01"),
@@ -111,6 +114,9 @@ def main(argv=None):
                     is_critical_flag=parse_csv_boolean(r.get("is_critical_flag", False)),
                 )
                 dossier = supervisor.process_task(payload)
+            except SecurityException:
+                print(f"Error: CSV row {row_number} contains a sensitive identifier.", file=sys.stderr)
+                return 1
             except (ValueError, TypeError) as exc:
                 print(f"Error: CSV row {row_number}: {exc}", file=sys.stderr)
                 return 1
