@@ -47,7 +47,7 @@ curl -X POST http://127.0.0.1:8000/api/audit \
   -d '{"task_id":"T1","target_identifier":"KEY-01","primary_metric":10,"secondary_metric":3,"status_descriptor":"NOMINAL"}'
 ```
 
-The browser demo does not call these endpoints. For development use `python -m http.server 8080 --directory web` then open `http://localhost:8080`.
+The `/api/chat` endpoint uses a deterministic mock responder, not a language model or scientific inference. Other provider names are rejected explicitly. The browser demo does not call these endpoints. For development use `python -m http.server 8080 --directory web` then open `http://localhost:8080`.
 
 ## Security and privacy
 

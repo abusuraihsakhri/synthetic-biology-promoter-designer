@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Synthetic Biology Promoter Designer API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
+    "description": "Generic threshold-rule evaluator with in-memory HMAC audit chain; not a biological sequence-design tool.",
     "version": "3.0.0-ENTERPRISE",
     "contact": {
       "name": "Dr. Abu Suraih Sakhri",
@@ -22,17 +22,17 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus operational metrics",
+        "summary": "JSON task and audit counters",
         "responses": {
           "200": {
-            "description": "Prometheus text metrics"
+            "description": "Operational counters as JSON"
           }
         }
       }
     },
     "/api/audit": {
       "post": {
-        "summary": "Dispatch task payload across specialized workers",
+        "summary": "Apply generic threshold rules and sign audit entry",
         "requestBody": {
           "content": {
             "application/json": {
@@ -76,7 +76,7 @@
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
+        "summary": "Deterministic mock reply (not AI model inference)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -103,7 +103,7 @@
     },
     "/api/audit/logs": {
       "get": {
-        "summary": "Retrieve and cryptographically verify HMAC audit trail",
+        "summary": "Retrieve audit chain and verify all HMAC signatures",
         "responses": {
           "200": {
             "description": "Cryptographic audit trail"
